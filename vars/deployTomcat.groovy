@@ -1,11 +1,28 @@
-def call(String server, String warPath) {
+// vars/deployTomcat.groovy
+def call(String warFilePath, String pemKeyPath, String remoteHost, String remoteUser = "ubuntu", String remoteDir = "/opt/deploy") {
+    echo "Starting deployment of WAR: ${warFilePath} to ${remoteHost}:${remoteDir}"
+
+    // Temporary directory on remote server
+    def tempDir = "/home/${remoteUser}"
+
+    // Verify WAR exists
     sh """
-    echo "Verifying WAR location"
-    ls -l webapp/target
+        if [ ! -f ${warFilePath} ]; then
+            echo "WAR file not found at ${warFilePath}"
+            exit 1
+        fi
+    """
 
-    echo "Copying WAR to remote server"
-    scp -i /home/ubuntu/cicd.pem -o StrictHostKeyChecking=no webapp/target/webapp.war ubuntu@172.31.77.87:/home/ubuntu/
+    // Copy WAR to remote server
+    sh """
+        scp -i ${pemKeyPath} -o StrictHostKeyChecking=no ${warFilePath} ${remoteUser}@${remoteHost}:${tempDir}/ || { echo 'SCP failed!'; exit 1; }
+    """
 
+    // Move WAR to final destination with sudo
+    sh """
+        ssh -i ${pemKeyPath} -o StrictHostKeyChecking=no ${remoteUser}@${remoteHost} \\
+        "sudo mv ${tempDir}/\$(basename ${warFilePath}) ${remoteDir}/ && sudo chown ${remoteUser}:${remoteUser} ${remoteDir}/\$(basename ${warFilePath})" || { echo 'Remote move failed!'; exit 1; }
+    """
 
-    echo "Deploying application"
-   ssh -i /home/ubuntu/cicd.pem ubuntu@172.31.77.87 "sudo mv /home/ubuntu/webapp.war /opt/deploy/"
+    echo "Deployment completed successfully!"
+}
