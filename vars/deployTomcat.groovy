@@ -4,14 +4,8 @@ def call(String server, String warPath) {
     ls -l webapp/target
 
     echo "Copying WAR to remote server"
-    scp -o StrictHostKeyChecking=no ${warPath} ${server}:/opt/deploy/
+    scp -i /home/ubuntu/cicd.pem -o StrictHostKeyChecking=no webapp/target/webapp.war ubuntu@172.31.77.87:/home/ubuntu/
+
 
     echo "Deploying application"
-    ssh -o StrictHostKeyChecking=no ${server} '
-        sudo systemctl stop tomcat10
-        sudo rm -rf /var/lib/tomcat10/webapps/*
-        sudo mv /opt/deploy/*.war /var/lib/tomcat10/webapps/
-        sudo systemctl start tomcat10
-    '
-    """
-}
+   ssh -i /home/ubuntu/cicd.pem ubuntu@172.31.77.87 "sudo mv /home/ubuntu/webapp.war /opt/deploy/"
