@@ -1,11 +1,15 @@
-def call(String server, String warPath) {
-    echo "Deploying WAR to ${server}"
+def call(String server, String warName) {
+
     sh """
+    echo "Copying WAR to remote server"
+    scp target/${warName} ${server}:/opt/deploy/${warName}
+
+    echo "Deploying application on Tomcat"
     ssh ${server} '
-        rm -rf /opt/tomcat/webapps/*.war
-        rm -rf /opt/tomcat/webapps/*
+        sudo systemctl stop tomcat10
+        sudo rm -rf /var/lib/tomcat10/webapps/${warName.replace(".war","")}*
+        sudo mv /opt/deploy/${warName} /var/lib/tomcat10/webapps/
+        sudo systemctl start tomcat10
     '
-    scp ${warPath} ${server}:/opt/tomcat/webapps/
-    ssh ${server} '/opt/tomcat/bin/startup.sh'
     """
 }
