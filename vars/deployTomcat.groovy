@@ -1,9 +1,10 @@
-def call(String server, String warPattern) {
+def call(String server, String warPath) {
     sh """
-    echo "Copying WAR to remote server"
-    ls -l target
+    echo "Verifying WAR location"
+    ls -l webapp/target
 
-    scp -o StrictHostKeyChecking=no target/${warPattern} ${server}:/opt/deploy/
+    echo "Copying WAR to remote server"
+    scp -o StrictHostKeyChecking=no ${warPath} ${server}:/opt/deploy/
 
     echo "Deploying application"
     ssh -o StrictHostKeyChecking=no ${server} '
