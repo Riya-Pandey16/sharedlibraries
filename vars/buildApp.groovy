@@ -10,7 +10,7 @@ stage('Verify WAR') {
             echo "Workspace:"
             pwd
             echo "Listing target directory:"
-            ls -l target || echo "❌ target directory not found"
+            ls -l target || echo " target directory not found"
         '''
     }
 }
